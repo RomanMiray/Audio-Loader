@@ -22,7 +22,7 @@ And bacground music:
 - PS3
 - PS4
 - PS5
-(xbox and switch does not have bg music)
+- (xbox and switch does not have bg music)
 
 ---
 
