@@ -1,0 +1,8 @@
+{
+	"$schema": "https://raw.githubusercontent.com/SteamClientHomebrew/Millennium/main/src/sys/plugin-schema.json",
+
+	"name": "AuDi0L0aD#r3#8D0duJm49DonnieDarko",
+	"common_name": "Audio Loader",
+	"description": "Allows you to set custom audio packs for big picture mode. Includes Play Station, Xbox and Nintendo packs! Also you can manually add your own packs.",
+	"backendType": "lua"
+}
