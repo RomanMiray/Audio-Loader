@@ -5,7 +5,6 @@ Set your own UI sounds and background music in steam Big Picture Mode!
 ## Features
 
 - Choose any pack you want
-- Choose any background music you want
 
 By default, the pack contains:
 - Steam Deck (Default)
