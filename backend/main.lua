@@ -1,11 +1,9 @@
--- This code likely requires a lot of fixes, if so pls notify me and help
-
 local logger = require("logger")
 local millennium = require("millennium")
 
 -- ================== OS / PATHS ==================
 
--- Probably this is a complex way but i'm tired and it works so i don't give a damn
+-- Probably there is no need for these path separators vars
 local IS_WINDOWS = package.config:sub(1,1) == "\\"
 local PATH_SEPARATOR = IS_WINDOWS and "\\" or "/"
 
