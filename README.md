@@ -16,6 +16,10 @@ By default, the pack contains:
 - Xbox 360 (WIP)
 - Xbox Series
 
+## Going to implement later:
+- Background music
+- Better packs quality
+
 ---
 
 The place for screenshot
