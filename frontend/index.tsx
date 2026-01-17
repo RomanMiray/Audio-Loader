@@ -30,18 +30,6 @@ const SettingsContent = () => {
 
     const selectedOption = options.find(o => o.data === selectedData)!;
 
-    const descriptionText = [
-        "(ADDING YOUR OWN SOUNDS ISN'T IMPLEMENTED YET! WORK IN PROGRESS!)",
-        "(BACKGROUND MUSIC AND ADDING CUSTOM BACKGROUND MUSIC ISN'T IMPLEMENTED YET EITHER)",
-        "PS3 and Xbox 360 will be added later",
-        "Steam Deck is default theme. Choose any pack you want in the dropdown menu.",
-        "To manually add your own pack, you need:",
-        "1. Rename sound files (.mp3 or .wav) as default Steam UI sounds (Check steam_root -> steamui -> sounds folder)",
-        "2. Open dropdown menu, click Add Custom Pack and select your folder",
-        "3. Now choose it from the dropdown menu",
-        "4. Enjoy!"
-    ];
-
     useEffect(() => {
         getCurrentPack().then(pack => {
             if (pack) setSelectedData(pack.toLowerCase());
@@ -50,15 +38,7 @@ const SettingsContent = () => {
 
     return (
         <Field
-            label="Audio Pack"
-            /* Let me know if there is more practical and suitable way to implement this */
-            description={
-                <>
-                    {descriptionText.map((line, i) => (
-                        <span key={i}>{line}<br /></span> 
-                    ))}                                    
-                </>
-            } 
+            label="Audio Pack" 
             icon={<IconsModule.Settings />}
             bottomSeparator="standard"
             focusable

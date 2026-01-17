@@ -1,82 +1,61 @@
--- This code likely requires a lot of fixes, if so pls notify me and help
-
 local logger = require("logger")
 local millennium = require("millennium")
+local fs = require("fs")
 
--- ================== OS / PATHS ==================
-
--- Probably this is a complex way but i'm tired and it works so i don't give a damn
-local IS_WINDOWS = package.config:sub(1,1) == "\\"
-local PATH_SEPARATOR = IS_WINDOWS and "\\" or "/"
+-- ================== PATHS ==================
 
 local STEAM_ROOT = millennium.steam_path()
-local PLUGIN_ROOT = STEAM_ROOT .. PATH_SEPARATOR .. "plugins" .. PATH_SEPARATOR .. "AudioLoader"
-local PACKS_PATH = PLUGIN_ROOT .. PATH_SEPARATOR .. "packs"
-local STEAM_SOUNDS_PATH = STEAM_ROOT .. PATH_SEPARATOR .. "steamui" .. PATH_SEPARATOR .. "sounds"
-local CONFIG_PATH = PLUGIN_ROOT .. PATH_SEPARATOR .. "config.txt"
+local PLUGIN_ROOT = fs.join(STEAM_ROOT, "plugins", "AudioLoader")
+local PACKS_PATH = fs.join(PLUGIN_ROOT, "packs")
+local STEAM_SOUNDS_PATH = fs.join(STEAM_ROOT, "steamui", "sounds")
+local CONFIG_PATH = fs.join(PLUGIN_ROOT, "config.txt")
 
 -- ================== LOGGER ==================
-logger:info("=== Audio Loader Backend ===")
+
+logger:info("=== Audio Loader Backend (fs) ===")
 logger:info("Steam root: " .. STEAM_ROOT)
 logger:info("Plugin root: " .. PLUGIN_ROOT)
 logger:info("Packs path: " .. PACKS_PATH)
 logger:info("Steam sounds path: " .. STEAM_SOUNDS_PATH)
 logger:info("Config path: " .. CONFIG_PATH)
-logger:info("Running on Windows: " .. tostring(IS_WINDOWS))
-logger:info("Path separator: " .. PATH_SEPARATOR)
 logger:info("================================")
 
 -- ================== HELPERS ==================
-local function is_audio_file(name)
-    return name:match("%.wav$") or name:match("%.mp3$")
+
+local function is_audio_file(filename)
+    local ext = fs.extension(filename):lower()
+    return ext == ".wav" or ext == ".mp3"
 end
 
-local function list_files(dir)
-    local files = {}
-    local cmd = IS_WINDOWS and ('dir "' .. dir .. '" /b') or ('ls "' .. dir .. '"')
-    local p = io.popen(cmd)
-    if not p then return files end
-    for file in p:lines() do
-        table.insert(files, file)
+local function copy_pack(src_dir, dst_dir)
+    if not fs.exists(src_dir) or not fs.is_directory(src_dir) then
+        logger:error("Invalid source directory: " .. src_dir)
+        return false
     end
-    p:close()
-    return files
-end
 
-local function copy_file(src, dst)
-    local in_f = io.open(src, "rb")
-    if not in_f then return false end
-    local data = in_f:read("*all")
-    in_f:close()
+    local entries = fs.list(src_dir)
+    if not entries then
+        logger:error("Failed to list directory: " .. src_dir)
+        return false
+    end
 
-    local out_f = io.open(dst, "wb")
-    if not out_f then return false end
-    out_f:write(data)
-    out_f:close()
+    for _, entry in ipairs(entries) do
+        local name = entry.name
+        if type(name) == "string" and is_audio_file(name) then
+            local src_file = fs.join(src_dir, name)
+            local dst_file = fs.join(dst_dir, name)
+
+            if fs.is_file(src_file) then
+                fs.copy(src_file, dst_file)
+            end
+        end
+    end
 
     return true
 end
 
-local function copy_pack(src_dir, dst_dir)
-    for _, file in ipairs(list_files(src_dir)) do
-        if is_audio_file(file) then
-            copy_file(src_dir .. PATH_SEPARATOR .. file, dst_dir .. PATH_SEPARATOR .. file)
-        end
-    end
-end
-
-local function dir_exists(path)
-    local p = io.popen(
-        IS_WINDOWS and ('dir "' .. path .. '" /b 2>nul')
-        or ('ls "' .. path .. '" 2>/dev/null')
-    )
-    if not p then return false end
-    local ok = p:read("*l") ~= nil
-    p:close()
-    return ok
-end
-
 -- ================== CONFIG ==================
+
 local function save_selected_pack(pack)
     local f = io.open(CONFIG_PATH, "w")
     if f then
@@ -88,32 +67,37 @@ end
 
 local function load_selected_pack()
     local f = io.open(CONFIG_PATH, "r")
-    if not f then return "steamdeck" end
+    if not f then
+        return "steamdeck"
+    end
+
     local pack = f:read("*l")
     f:close()
     return pack or "steamdeck"
 end
 
 -- ================== CORE LOGIC ==================
+
 local function apply_pack(pack_name)
     pack_name = tostring(pack_name):lower()
 
-    local base_pack = PACKS_PATH .. PATH_SEPARATOR .. "steamdeck"
-    local target_pack = PACKS_PATH .. PATH_SEPARATOR .. pack_name
+    local base_pack = fs.join(PACKS_PATH, "steamdeck")
+    local target_pack = fs.join(PACKS_PATH, pack_name)
 
-    if not dir_exists(base_pack) then
-        logger:error("Base pack (steamdeck) not found at: " .. base_pack)
+    if not fs.exists(base_pack) then
+        logger:error("Base pack not found: " .. base_pack)
         return false
     end
 
-    logger:info("Restoring SteamDeck base sounds...")
+    logger:info("Restoring SteamDeck base sounds")
     copy_pack(base_pack, STEAM_SOUNDS_PATH)
 
     if pack_name ~= "steamdeck" then
-        if not dir_exists(target_pack) then
+        if not fs.exists(target_pack) then
             logger:error("Target pack not found: " .. target_pack)
             return false
         end
+
         logger:info("Applying pack: " .. pack_name)
         copy_pack(target_pack, STEAM_SOUNDS_PATH)
     end
@@ -124,9 +108,16 @@ local function apply_pack(pack_name)
 end
 
 -- ================== FRONTEND CALLBACKS ==================
+
 function switch_pack_callback(args)
-    local pack = type(args) == "table" and (args.packName or args[1]) or tostring(args)
-    if not pack then return false end
+    local pack =
+        type(args) == "table" and (args.packName or args[1])
+        or tostring(args)
+
+    if not pack then
+        return false
+    end
+
     return apply_pack(pack)
 end
 
@@ -135,6 +126,7 @@ function get_current_pack()
 end
 
 -- ================== MILLENNIUM HOOKS ==================
+
 local function on_load()
     logger:info("Audio Loader backend loaded")
     millennium.ready()
@@ -146,8 +138,7 @@ end
 
 local function on_frontend_loaded()
     logger:info("Frontend loaded → restoring last selected pack")
-    local pack = load_selected_pack()
-    apply_pack(pack)
+    apply_pack(load_selected_pack())
 end
 
 return {
