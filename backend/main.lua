@@ -2,7 +2,15 @@ local logger = require("logger")
 local millennium = require("millennium")
 local fs = require("fs")
 
+<<<<<<< HEAD
 -- ================== PATHS ==================
+=======
+-- ================== OS / PATHS ==================
+
+-- Probably there is no need for these path separators vars
+local IS_WINDOWS = package.config:sub(1,1) == "\\"
+local PATH_SEPARATOR = IS_WINDOWS and "\\" or "/"
+>>>>>>> c78cdeed3e15ab8e8346a0c3f45dfe79de259ebd
 
 local STEAM_ROOT = millennium.steam_path()
 local PLUGIN_ROOT = fs.join(STEAM_ROOT, "plugins", "AudioLoader")
